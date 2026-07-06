@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --radius: 1rem;
+  --background: oklch(0.98 0.015 110);
+  --foreground: oklch(0.22 0.05 150);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.05 150);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.05 150);
+  --primary: oklch(0.48 0.14 148);
+  --primary-foreground: oklch(0.98 0.015 110);
+  --secondary: oklch(0.94 0.03 120);
+  --secondary-foreground: oklch(0.28 0.08 150);
+  --muted: oklch(0.95 0.02 115);
+  --muted-foreground: oklch(0.45 0.04 150);
+  --accent: oklch(0.62 0.22 25);
+  --accent-foreground: oklch(0.98 0.015 110);
+  --destructive: oklch(0.6 0.24 25);
+  --destructive-foreground: oklch(0.98 0.015 110);
+  --border: oklch(0.9 0.02 120);
+  --input: oklch(0.9 0.02 120);
+  --ring: oklch(0.48 0.14 148);
+
+  --leaf: oklch(0.55 0.18 145);
+  --leaf-glow: oklch(0.78 0.22 130);
+  --berry: oklch(0.62 0.24 25);
+  --cream: oklch(0.97 0.03 95);
+
+  --font-display: "Fraunces", "Georgia", serif;
+  --font-sans: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+
+  --gradient-hero: radial-gradient(ellipse at top left, oklch(0.78 0.22 130 / 0.35), transparent 60%),
+                   radial-gradient(ellipse at bottom right, oklch(0.62 0.24 25 / 0.25), transparent 55%),
+                   linear-gradient(135deg, oklch(0.22 0.06 150) 0%, oklch(0.32 0.1 145) 100%);
+  --gradient-leaf: linear-gradient(135deg, oklch(0.55 0.18 145), oklch(0.72 0.2 135));
+  --gradient-berry: linear-gradient(135deg, oklch(0.62 0.24 25), oklch(0.72 0.2 40));
+  --shadow-3d: 0 30px 60px -20px oklch(0.22 0.1 150 / 0.35), 0 18px 36px -18px oklch(0.22 0.1 150 / 0.25);
+  --shadow-glow: 0 0 80px oklch(0.72 0.22 130 / 0.35);
+}
+
+@layer base {
+  * { border-color: var(--border); }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+  }
+  h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
+}
+
+.card-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.6s;
+}
+.card-3d:hover {
+  transform: translateY(-10px) rotateX(4deg) rotateY(-6deg) scale(1.02);
+  box-shadow: 0 45px 80px -20px oklch(0.22 0.1 150 / 0.5);
+}
