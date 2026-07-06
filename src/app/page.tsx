@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
 import { Leaf, Sprout, Truck, MapPin, Phone, Mail, Clock, ShieldCheck, ArrowRight, Star, Instagram, Facebook, MessageCircle } from "lucide-react";
 
 import logo from "@/assets/logo.asset.json";
@@ -39,29 +40,53 @@ function useMouseParallax() {
   return pos;
 }
 
-function TiltCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function TiltCard({ children, className = "", float = false }: { children: React.ReactNode; className?: string; float?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
-  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  
+  const rotateX = useTransform(y, [-0.5, 0.5], [10, -10]);
+  const rotateY = useTransform(x, [-0.5, 0.5], [-10, 10]);
+  
+  const springConfig = { damping: 20, stiffness: 300 };
+  const rotateXSpring = useSpring(rotateX, springConfig);
+  const rotateYSpring = useSpring(rotateY, springConfig);
+  
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const el = ref.current;
     if (!el) return;
-    const r = el.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width - 0.5;
-    const y = (e.clientY - r.top) / r.height - 0.5;
-    el.style.transform = `perspective(1000px) rotateY(${x * 10}deg) rotateX(${-y * 10}deg) translateY(-6px)`;
+    const rect = el.getBoundingClientRect();
+    x.set((e.clientX - rect.left) / rect.width - 0.5);
+    y.set((e.clientY - rect.top) / rect.height - 0.5);
   };
-  const onLeave = () => {
-    if (ref.current) ref.current.style.transform = "";
+  
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
   };
+  
   return (
-    <div
+    <motion.div
       ref={ref}
-      onMouseMove={onMove}
-      onMouseLeave={onLeave}
-      className={`transition-transform duration-500 ease-out will-change-transform ${className}`}
-      style={{ transformStyle: "preserve-3d" }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        rotateX: rotateXSpring,
+        rotateY: rotateYSpring,
+        transformStyle: "preserve-3d",
+      }}
+      className={`will-change-transform ${className}`}
+      animate={float ? {
+        y: [0, -10, 0],
+      } : undefined}
+      transition={float ? {
+        duration: 3,
+        repeat: Infinity,
+        ease: "easeInOut",
+      } : undefined}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }
 
@@ -162,35 +187,48 @@ export default function Landing() {
           </div>
 
           {/* 3D floating collage */}
-          <div className="relative h-[420px] sm:h-[520px] lg:h-[600px] perspective-1000">
-            <div
-              className="absolute inset-0 preserve-3d"
-              style={{ transform: `rotateY(${parallax.x * 6}deg) rotateX(${-parallax.y * 6}deg)` }}
-            >
+          <div className="relative h-[420px] sm:h-[520px] lg:h-[600px] max-w-full mx-auto isolate z-10">
+            <div className="relative w-full h-full max-w-[500px] mx-auto">
               {/* main card */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[78%] aspect-[3/4] rounded-3xl overflow-hidden shadow-3d ring-1 ring-white/20 animate-float-slow">
-                <img src={image1.url} alt="Strawberry plant" className="h-full w-full object-cover" />
-                <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
-                  <div className="text-xs font-semibold text-leaf-glow uppercase tracking-widest">Featured</div>
-                  <div className="font-display text-xl font-bold">Winter Dawn Strawberry</div>
+              <TiltCard float={true}>
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[70%] sm:w-[75%] aspect-[3/4] rounded-3xl overflow-hidden shadow-3d ring-1 ring-white/20">
+                  <img src={image1.url} alt="Strawberry plant" className="h-full w-full object-cover" />
+                  <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
+                    <div className="text-xs font-semibold text-leaf-glow uppercase tracking-widest">Featured</div>
+                    <div className="font-display text-xl font-bold">Winter Dawn Strawberry</div>
+                  </div>
                 </div>
-              </div>
+              </TiltCard>
               {/* left small */}
-              <div className="absolute -left-2 sm:left-0 top-20 w-40 sm:w-52 aspect-square rounded-2xl overflow-hidden shadow-3d ring-1 ring-white/20 animate-float-medium">
-                <img src={image2.url} alt="Root-inspected saplings" className="h-full w-full object-cover" />
-              </div>
+              <TiltCard float={true}>
+                <div className="absolute left-0 sm:left-2 top-[20%] w-32 sm:w-40 aspect-square rounded-2xl overflow-hidden shadow-3d ring-1 ring-white/20">
+                  <img src={image2.url} alt="Root-inspected saplings" className="h-full w-full object-cover" />
+                </div>
+              </TiltCard>
               {/* right small */}
-              <div className="absolute -right-2 sm:right-0 bottom-8 w-44 sm:w-56 aspect-[4/5] rounded-2xl overflow-hidden shadow-3d ring-1 ring-white/20 animate-float-slow">
-                <img src={image3.url} alt="Fresh strawberries" className="h-full w-full object-cover" />
-              </div>
+              <TiltCard float={true}>
+                <div className="absolute right-0 sm:right-2 bottom-[15%] w-36 sm:w-44 aspect-[4/5] rounded-2xl overflow-hidden shadow-3d ring-1 ring-white/20">
+                  <img src={image3.url} alt="Fresh strawberries" className="h-full w-full object-cover" />
+                </div>
+              </TiltCard>
               {/* badge */}
-              <div className="absolute -bottom-2 left-4 rounded-2xl bg-cream text-primary px-4 py-3 shadow-3d flex items-center gap-2 animate-float-medium">
+              <motion.div
+                className="absolute bottom-4 left-4 sm:left-8 rounded-2xl bg-cream text-primary px-4 py-3 shadow-3d flex items-center gap-2"
+                animate={{
+                  y: [0, -8, 0],
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              >
                 <ShieldCheck className="h-5 w-5 text-primary" />
                 <div>
                   <div className="text-[10px] uppercase tracking-widest font-bold">Since 2015</div>
                   <div className="text-sm font-display font-bold">Farmer-trusted</div>
                 </div>
-              </div>
+              </motion.div>
             </div>
           </div>
         </div>
@@ -206,7 +244,13 @@ export default function Landing() {
       {/* SERVICES */}
       <section id="services" className="relative py-20 md:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="max-w-2xl">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="max-w-2xl"
+          >
             <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-bold text-primary">
               <Leaf className="h-3.5 w-3.5" /> What we grow
             </div>
@@ -217,9 +261,15 @@ export default function Landing() {
               From tissue-cultured runners to farm-ready fruit saplings, everything
               leaving our nursery is inspected root, stem, and leaf.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="mt-12 grid md:grid-cols-3 gap-6">
+          <motion.div
+            className="mt-12 grid md:grid-cols-3 gap-6"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             {[
               {
                 title: "Plant Nurseries",
@@ -240,29 +290,37 @@ export default function Landing() {
                 icon: Truck,
               },
             ].map((s, i) => (
-              <TiltCard key={s.title} className="card-3d">
-                <div className="group relative rounded-3xl overflow-hidden bg-card shadow-3d border border-border">
-                  <div className="aspect-[4/3] overflow-hidden">
-                    <img
-                      src={s.img}
-                      alt={s.title}
-                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                  </div>
-                  <div className="p-6">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-leaf-gradient grid place-items-center shadow-glow">
-                        <s.icon className="h-5 w-5 text-primary-foreground" />
-                      </div>
-                      <div className="text-xs uppercase tracking-widest font-bold text-muted-foreground">0{i + 1}</div>
+              <motion.div
+                key={s.title}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+              >
+                <TiltCard className="card-3d">
+                  <div className="group relative rounded-3xl overflow-hidden bg-card shadow-3d border border-border">
+                    <div className="aspect-[4/3] overflow-hidden">
+                      <img
+                        src={s.img}
+                        alt={s.title}
+                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
                     </div>
-                    <h3 className="mt-4 text-2xl font-bold text-card-foreground">{s.title}</h3>
-                    <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+                    <div className="p-6">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-leaf-gradient grid place-items-center shadow-glow">
+                          <s.icon className="h-5 w-5 text-primary-foreground" />
+                        </div>
+                        <div className="text-xs uppercase tracking-widest font-bold text-muted-foreground">0{i + 1}</div>
+                      </div>
+                      <h3 className="mt-4 text-2xl font-bold text-card-foreground">{s.title}</h3>
+                      <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+                    </div>
                   </div>
-                </div>
-              </TiltCard>
+                </TiltCard>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -272,7 +330,12 @@ export default function Landing() {
         <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-leaf-glow/30 blur-3xl animate-float-medium" />
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-2 gap-10 items-center">
-          <div>
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
             <div className="inline-flex items-center gap-2 rounded-full bg-berry/20 border border-berry/40 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-leaf-glow">
               <Clock className="h-3.5 w-3.5" /> Dispatch season
             </div>
@@ -299,32 +362,53 @@ export default function Landing() {
                 <MessageCircle className="h-4 w-4" /> WhatsApp us
               </a>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <motion.div
+            className="grid grid-cols-2 gap-4"
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             {[
               { img: image11.url, label: "Export-grade boxes" },
               { img: image7.url, label: "Cold-chain crates" },
               { img: image8.url, label: "Root-bagged saplings" },
               { img: image9.url, label: "Poly-house grown" },
             ].map((it, i) => (
-              <TiltCard key={it.label} className={i % 2 === 0 ? "mt-8" : ""}>
-                <div className="relative rounded-2xl overflow-hidden aspect-square shadow-3d ring-1 ring-white/10">
-                  <img src={it.img} alt={it.label} className="h-full w-full object-cover" />
-                  <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/70 to-transparent">
-                    <div className="text-xs font-semibold text-leaf-glow uppercase tracking-widest">{it.label}</div>
+              <motion.div
+                key={it.label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.3 + i * 0.1 }}
+                className={i % 2 === 0 ? "mt-8" : ""}
+              >
+                <TiltCard>
+                  <div className="relative rounded-2xl overflow-hidden aspect-square shadow-3d ring-1 ring-white/10">
+                    <img src={it.img} alt={it.label} className="h-full w-full object-cover" />
+                    <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/70 to-transparent">
+                      <div className="text-xs font-semibold text-leaf-glow uppercase tracking-widest">{it.label}</div>
+                    </div>
                   </div>
-                </div>
-              </TiltCard>
+                </TiltCard>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* GALLERY */}
       <section id="gallery" className="py-20 md:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="flex flex-wrap items-end justify-between gap-6 mb-12">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-wrap items-end justify-between gap-6 mb-12"
+          >
             <div className="max-w-xl">
               <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-bold text-primary">
                 <Leaf className="h-3.5 w-3.5" /> Inside the nursery
@@ -337,32 +421,49 @@ export default function Landing() {
               {[0,1,2,3,4].map(i => <Star key={i} className="h-5 w-5 fill-berry" />)}
               <span className="ml-2 text-sm text-muted-foreground font-medium">Trusted by 500+ farmers</span>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-12 gap-4">
-            <div className="col-span-12 md:col-span-8 aspect-[16/10] rounded-3xl overflow-hidden shadow-3d card-3d">
+          <motion.div
+            className="grid grid-cols-12 gap-4"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <motion.div
+              className="col-span-12 md:col-span-8 aspect-[16/10] rounded-3xl overflow-hidden shadow-3d card-3d"
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
               <video src={video.url} autoPlay muted loop playsInline className="h-full w-full object-cover" />
-            </div>
-            <div className="col-span-6 md:col-span-4 aspect-square rounded-3xl overflow-hidden shadow-3d card-3d">
-              <img src={image3.url} alt="Harvested strawberries" className="h-full w-full object-cover" />
-            </div>
-            <div className="col-span-6 md:col-span-4 aspect-square rounded-3xl overflow-hidden shadow-3d card-3d">
-              <img src={image2.url} alt="Root-inspected runners" className="h-full w-full object-cover" />
-            </div>
-            <div className="col-span-6 md:col-span-4 aspect-square rounded-3xl overflow-hidden shadow-3d card-3d">
-              <img src={image8.url} alt="Bagged saplings" className="h-full w-full object-cover" />
-            </div>
-            <div className="col-span-6 md:col-span-4 aspect-square rounded-3xl overflow-hidden shadow-3d card-3d">
-              <img src={image10.url} alt="Field planting" className="h-full w-full object-cover" />
-            </div>
-          </div>
+            </motion.div>
+            {[{ img: image3.url, alt: "Harvested strawberries" }, { img: image2.url, alt: "Root-inspected runners" }, { img: image8.url, alt: "Bagged saplings" }, { img: image10.url, alt: "Field planting" }].map((item, i) => (
+              <motion.div
+                key={item.alt}
+                className="col-span-6 md:col-span-4 aspect-square rounded-3xl overflow-hidden shadow-3d card-3d"
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.2 + i * 0.1 }}
+              >
+                <img src={item.img} alt={item.alt} className="h-full w-full object-cover" />
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </section>
 
       {/* CONTACT */}
       <section id="contact" className="py-20 md:py-28 bg-cream/60">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-[1fr_1.1fr] gap-10 items-start">
-          <div>
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
             <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-bold text-primary">
               <MapPin className="h-3.5 w-3.5" /> Visit or call
             </div>
@@ -396,9 +497,15 @@ export default function Landing() {
                 </a>
               ))}
             </div>
-          </div>
+          </motion.div>
 
-          <TiltCard>
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <TiltCard>
             <form
               onSubmit={(e) => { e.preventDefault(); alert("Thanks! We'll be in touch shortly."); }}
               className="rounded-3xl bg-card border border-border p-6 sm:p-8 shadow-3d"
@@ -437,6 +544,7 @@ export default function Landing() {
               </button>
             </form>
           </TiltCard>
+          </motion.div>
         </div>
       </section>
 
