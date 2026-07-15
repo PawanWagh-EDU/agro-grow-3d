@@ -1,8 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
-import { Leaf, Sprout, Truck, MapPin, Phone, Mail, Clock, ShieldCheck, ArrowRight, Star, Instagram, Facebook, MessageCircle } from "lucide-react";
+import { motion, useMotionValue, useTransform, useSpring, AnimatePresence } from "framer-motion";
+import {
+  Leaf, Sprout, Truck, MapPin, Phone, Mail, Clock, ShieldCheck, ArrowRight, Star,
+  Instagram, Facebook, MessageCircle, Sparkles, Users, TrendingUp, Award, Quote, X,
+  BadgeCheck, Timer,
+} from "lucide-react";
 
 import logo from "@/assets/logo.asset.json";
 import nursery1 from "@/assets/nursery1.asset.json";
@@ -26,6 +30,10 @@ import image10 from "@/assets/image10.asset.json";
 import image11 from "@/assets/image11.asset.json";
 import video from "@/assets/video.asset.json";
 
+import { HeroImageComposition } from "@/components/HeroImageComposition";
+
+/* ---------------- helpers ---------------- */
+
 function useMouseParallax() {
   const [pos, setPos] = useState({ x: 0, y: 0 });
   useEffect(() => {
@@ -40,18 +48,38 @@ function useMouseParallax() {
   return pos;
 }
 
-function TiltCard({ children, className = "", float = false }: { children: React.ReactNode; className?: string; float?: boolean }) {
+function useDaysUntil(dateStr: string) {
+  const [days, setDays] = useState<number | null>(null);
+  useEffect(() => {
+    const target = new Date(dateStr).getTime();
+    const diff = Math.ceil((target - Date.now()) / (1000 * 60 * 60 * 24));
+    setDays(diff > 0 ? diff : 0);
+  }, [dateStr]);
+  return days;
+}
+
+function TiltCard({
+  children,
+  className = "",
+  float = false,
+  intensity = 10,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  float?: boolean;
+  intensity?: number;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  
-  const rotateX = useTransform(y, [-0.5, 0.5], [10, -10]);
-  const rotateY = useTransform(x, [-0.5, 0.5], [-10, 10]);
-  
+
+  const rotateX = useTransform(y, [-0.5, 0.5], [intensity, -intensity]);
+  const rotateY = useTransform(x, [-0.5, 0.5], [-intensity, intensity]);
+
   const springConfig = { damping: 20, stiffness: 300 };
   const rotateXSpring = useSpring(rotateX, springConfig);
   const rotateYSpring = useSpring(rotateY, springConfig);
-  
+
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const el = ref.current;
     if (!el) return;
@@ -59,12 +87,12 @@ function TiltCard({ children, className = "", float = false }: { children: React
     x.set((e.clientX - rect.left) / rect.width - 0.5);
     y.set((e.clientY - rect.top) / rect.height - 0.5);
   };
-  
+
   const handleMouseLeave = () => {
     x.set(0);
     y.set(0);
   };
-  
+
   return (
     <motion.div
       ref={ref}
@@ -76,34 +104,66 @@ function TiltCard({ children, className = "", float = false }: { children: React
         transformStyle: "preserve-3d",
       }}
       className={`will-change-transform ${className}`}
-      animate={float ? {
-        y: [0, -10, 0],
-      } : undefined}
-      transition={float ? {
-        duration: 3,
-        repeat: Infinity,
-        ease: "easeInOut",
-      } : undefined}
+      animate={float ? { y: [0, -10, 0] } : undefined}
+      transition={float ? { duration: 3, repeat: Infinity, ease: "easeInOut" } : undefined}
     >
       {children}
     </motion.div>
   );
 }
 
+const testimonials = [
+  {
+    name: "Ramesh Patil",
+    place: "Nashik, Maharashtra",
+    quote:
+      "Ordered 8,000 Winter Dawn runners last season. Root strike rate was excellent — barely any losses after transplant.",
+    rating: 5,
+  },
+  {
+    name: "Suresh Deshmukh",
+    place: "Satara, Maharashtra",
+    quote:
+      "Been buying fruit saplings from YK Agro for three years now. Packing and dispatch are always on time.",
+    rating: 5,
+  },
+  {
+    name: "Anita Jadhav",
+    place: "Solapur, Maharashtra",
+    quote:
+      "Best wholesale rates I found for strawberry runners in the region, and the plants arrive genuinely healthy.",
+    rating: 5,
+  },
+];
+
+/* ---------------- page ---------------- */
+
 export default function Landing() {
   const parallax = useMouseParallax();
   const phone = "+91 98765 43210";
   const whatsapp = "919876543210";
+  const daysLeft = useDaysUntil("2026-08-08");
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const [testimonialIdx, setTestimonialIdx] = useState(0);
+
+  useEffect(() => {
+    const onScroll = () => setShowStickyBar(window.scrollY > 700);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => setTestimonialIdx((i) => (i + 1) % testimonials.length), 5000);
+    return () => clearInterval(t);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* NAV */}
       <nav className="fixed top-0 inset-x-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border/60">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 h-16 flex items-center justify-between">
-          <a href="#top" className="flex items-center gap-2.5 min-w-0">
-            <div className="h-10 w-10 rounded-full bg-cream shrink-0 grid place-items-center shadow-3d ring-1 ring-primary/20">
-              <img src={logo.url} alt="YK Agro Nursery logo" className="h-9 w-9 object-contain" />
-            </div>
+          <a href="#top" className="flex items-center gap-3 min-w-0">
+            <img src="/logo.png" alt="YK Agro Nursery logo" className="h-16 w-auto object-contain" />
             <div className="min-w-0">
               <div className="font-display font-bold text-base sm:text-lg leading-tight truncate">YK Agro Nursery</div>
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground hidden sm:block">Rooted in quality</div>
@@ -111,6 +171,7 @@ export default function Landing() {
           </a>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium">
             <a href="#services" className="hover:text-primary transition-colors">Services</a>
+            <a href="#testimonials" className="hover:text-primary transition-colors">Reviews</a>
             <a href="#gallery" className="hover:text-primary transition-colors">Gallery</a>
             <a href="#dispatch" className="hover:text-primary transition-colors">Dispatch</a>
             <a href="#contact" className="hover:text-primary transition-colors">Contact</a>
@@ -128,27 +189,45 @@ export default function Landing() {
       </nav>
 
       {/* HERO */}
-      <header id="top" className="relative pt-24 pb-16 md:pt-32 md:pb-24 bg-hero text-primary-foreground overflow-hidden">
-        {/* floating deco */}
+      <header id="top" className="relative pt-24 pb-16 md:pt-32 md:pb-28 bg-hero text-primary-foreground overflow-hidden perspective-container">
+        {/* floating deco orbs — multi-depth parallax */}
         <div
-          className="absolute -top-20 -left-10 h-72 w-72 rounded-full bg-leaf-glow/40 blur-3xl animate-float-slow"
-          style={{ transform: `translate(${parallax.x * 30}px, ${parallax.y * 30}px)` }}
+          className="absolute -top-20 -left-10 h-80 w-80 rounded-full bg-leaf-glow/40 blur-3xl"
+          style={{ transform: `translate3d(${parallax.x * 40}px, ${parallax.y * 40}px, 0)` }}
         />
         <div
-          className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-berry/30 blur-3xl animate-float-medium"
-          style={{ transform: `translate(${parallax.x * -40}px, ${parallax.y * -40}px)` }}
+          className="absolute bottom-0 right-0 h-[26rem] w-[26rem] rounded-full bg-berry/30 blur-3xl"
+          style={{ transform: `translate3d(${parallax.x * -55}px, ${parallax.y * -55}px, 0)` }}
+        />
+        <div
+          className="absolute top-1/3 right-1/4 h-40 w-40 rounded-full bg-gold/25 blur-2xl"
+          style={{ transform: `translate3d(${parallax.x * 25}px, ${parallax.y * -30}px, 0)` }}
         />
         <div className="absolute inset-0 opacity-[0.08] bg-[radial-gradient(circle_at_1px_1px,white_1px,transparent_0)] [background-size:24px_24px]" />
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-16 items-center">
-          <div className="animate-grow-in">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur border border-white/20 px-3 py-1.5 text-xs font-medium mb-6">
-              <Sprout className="h-3.5 w-3.5 text-leaf-glow" />
-              Premium Wholesale Nursery · Pune, Maharashtra
+          <div>
+            {/* urgency + trust badges */}
+            <div className="flex flex-wrap items-center gap-2 mb-6">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur border border-white/20 px-3 py-1.5 text-xs font-medium">
+                <Sparkles className="h-3.5 w-3.5 text-leaf-glow" />
+                Premium Wholesale Nursery · Pune, Maharashtra
+              </div>
+              {daysLeft !== null && daysLeft > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-berry/25 border border-berry/50 px-3 py-1.5 text-xs font-bold"
+                >
+                  <Timer className="h-3.5 w-3.5 text-leaf-glow animate-pulse" />
+                  Only {daysLeft} days left to reserve!
+                </motion.div>
+              )}
             </div>
+
             <h1 className="text-balance text-4xl sm:text-5xl lg:text-7xl font-extrabold leading-[1.05]">
               Healthy roots.<br />
-              <span className="italic text-leaf-glow">Sweeter harvests.</span>
+              <span className="italic text-gradient-gold">Sweeter harvests.</span>
             </h1>
             <p className="mt-6 text-base sm:text-lg text-primary-foreground/80 max-w-xl leading-relaxed">
               YK Agro Nursery grows premium strawberry runners and fruit plant
@@ -159,75 +238,121 @@ export default function Landing() {
             <div className="mt-8 flex flex-wrap gap-3">
               <a
                 href="#contact"
-                className="inline-flex items-center gap-2 rounded-full bg-leaf-glow text-primary px-6 py-3 text-sm font-bold hover:scale-105 transition-transform shadow-glow"
+                className="group relative inline-flex items-center gap-2 rounded-full bg-leaf-glow text-primary px-6 py-3.5 text-sm font-bold hover:scale-105 transition-transform shadow-glow overflow-hidden"
               >
-                Reserve Your Plants
-                <ArrowRight className="h-4 w-4" />
+                <span className="absolute inset-0 -z-0">
+                  <span className="absolute inset-y-0 -left-1/2 w-1/3 bg-white/40 animate-shine" />
+                </span>
+                <span className="relative z-10 flex items-center gap-2">
+                  Reserve Your Plants Now
+                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </span>
               </a>
               <a
-                href="#services"
-                className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/5 backdrop-blur px-6 py-3 text-sm font-semibold hover:bg-white/10 transition-colors"
+                href={`https://wa.me/${whatsapp}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/5 backdrop-blur px-6 py-3.5 text-sm font-semibold hover:bg-white/10 transition-colors"
               >
-                See Our Nursery
+                <MessageCircle className="h-4 w-4" />
+                Chat on WhatsApp
               </a>
+            </div>
+
+            {/* social proof row */}
+            <div className="mt-6 flex items-center gap-3">
+              <div className="flex -space-x-2">
+                {["/2.jpeg", "/3.jpeg", "/8.jpeg"].map((img, i) => (
+                  <img
+                    key={i}
+                    src={img}
+                    alt="Farmer customer"
+                    className="h-8 w-8 rounded-full object-cover ring-2 ring-primary/60"
+                  />
+                ))}
+              </div>
+              <div className="flex items-center gap-1 text-gold">
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <Star key={i} className="h-3.5 w-3.5 fill-gold text-gold" />
+                ))}
+              </div>
+              <span className="text-xs text-primary-foreground/70 font-medium">500+ farmers trust us</span>
             </div>
 
             <div className="mt-10 grid grid-cols-3 gap-4 max-w-md">
               {[
-                { k: "10L+", v: "Runners / season" },
-                { k: "100%", v: "Root inspected" },
-                { k: "PAN", v: "India dispatch" },
+                { k: "10L+", v: "Runners / season", icon: TrendingUp },
+                { k: "100%", v: "Root inspected", icon: BadgeCheck },
+                { k: "PAN", v: "India dispatch", icon: Truck },
               ].map((s) => (
-                <div key={s.v} className="rounded-2xl bg-white/5 border border-white/10 backdrop-blur p-3 text-center">
+                <motion.div
+                  key={s.v}
+                  whileHover={{ y: -4 }}
+                  className="rounded-2xl bg-white/5 border border-white/10 backdrop-blur p-3 text-center"
+                >
+                  <s.icon className="h-4 w-4 mx-auto mb-1 text-leaf-glow" />
                   <div className="font-display text-2xl font-bold text-leaf-glow">{s.k}</div>
                   <div className="text-[11px] uppercase tracking-wider text-primary-foreground/70 mt-1">{s.v}</div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
 
           {/* 3D floating collage */}
-          <div className="relative h-[420px] sm:h-[520px] lg:h-[600px] max-w-full mx-auto isolate z-10">
-            <div className="relative w-full h-full max-w-[500px] mx-auto">
+          <div className="relative h-[420px] sm:h-[520px] lg:h-[620px] max-w-full mx-auto isolate z-10">
+            <div className="relative w-full h-full max-w-[520px] mx-auto">
               {/* main card */}
-              <TiltCard float={true}>
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[70%] sm:w-[75%] aspect-[3/4] rounded-3xl overflow-hidden shadow-3d ring-1 ring-white/20">
-                  <img src={image1.url} alt="Strawberry plant" className="h-full w-full object-cover" />
-                  <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
+              <TiltCard intensity={8}>
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[70%] sm:w-[75%] aspect-[3/4] overflow-hidden shadow-3d ring-1 ring-white/20 z-10">
+                  <img src="/1.jpeg" alt="Strawberry plant" className="h-full w-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 p-4">
                     <div className="text-xs font-semibold text-leaf-glow uppercase tracking-widest">Featured</div>
                     <div className="font-display text-xl font-bold">Winter Dawn Strawberry</div>
                   </div>
+                  <div className="absolute top-4 right-4 rounded-full bg-berry/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide">
+                    Bestseller
+                  </div>
                 </div>
               </TiltCard>
+
               {/* left small */}
-              <TiltCard float={true}>
-                <div className="absolute left-0 sm:left-2 top-[20%] w-32 sm:w-40 aspect-square rounded-2xl overflow-hidden shadow-3d ring-1 ring-white/20">
-                  <img src={image2.url} alt="Root-inspected saplings" className="h-full w-full object-cover" />
+              <TiltCard intensity={12}>
+                <div className="absolute left-0 sm:left-2 top-[18%] w-32 sm:w-40 aspect-square overflow-hidden shadow-3d ring-1 ring-white/20 z-20">
+                  <img src="/2.jpeg" alt="Root-inspected saplings" className="h-full w-full object-cover" />
                 </div>
               </TiltCard>
+
               {/* right small */}
-              <TiltCard float={true}>
-                <div className="absolute right-0 sm:right-2 bottom-[15%] w-36 sm:w-44 aspect-[4/5] rounded-2xl overflow-hidden shadow-3d ring-1 ring-white/20">
-                  <img src={image3.url} alt="Fresh strawberries" className="h-full w-full object-cover" />
+              <TiltCard intensity={12}>
+                <div className="absolute right-0 sm:right-2 bottom-[18%] w-36 sm:w-44 aspect-[4/5] overflow-hidden shadow-3d ring-1 ring-white/20 z-20">
+                  <img src="/3.jpeg" alt="Fresh strawberries" className="h-full w-full object-cover" />
                 </div>
               </TiltCard>
-              {/* badge */}
+
+              {/* trust badge */}
               <motion.div
-                className="absolute bottom-4 left-4 sm:left-8 rounded-2xl bg-cream text-primary px-4 py-3 shadow-3d flex items-center gap-2"
-                animate={{
-                  y: [0, -8, 0],
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
+                className="absolute bottom-4 left-4 sm:left-8 rounded-2xl bg-cream text-primary px-4 py-3 shadow-3d-lg flex items-center gap-2 z-30"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.7 }}
               >
                 <ShieldCheck className="h-5 w-5 text-primary" />
                 <div>
                   <div className="text-[10px] uppercase tracking-widest font-bold">Since 2015</div>
                   <div className="text-sm font-display font-bold">Farmer-trusted</div>
                 </div>
+              </motion.div>
+
+              {/* rating badge */}
+              <motion.div
+                className="absolute top-2 right-2 sm:right-6 rounded-full glass-dark px-3 py-2 flex items-center gap-1.5 z-20"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.9 }}
+              >
+                <Star className="h-3.5 w-3.5 fill-gold text-gold" />
+                <span className="text-xs font-bold">4.9/5</span>
               </motion.div>
             </div>
           </div>
@@ -274,19 +399,19 @@ export default function Landing() {
               {
                 title: "Plant Nurseries",
                 desc: "Full-spectrum ornamental and productive nursery stock grown under climate-controlled shade houses.",
-                img: image4.url,
+                img: "/4.jpeg",
                 icon: Sprout,
               },
               {
                 title: "Fruit Plant Nurseries",
                 desc: "Grafted and seed-raised fruit saplings — hardened for transplant and ready for Indian agri-climates.",
-                img: image5.url,
+                img: "/5.jpeg",
                 icon: Leaf,
               },
               {
                 title: "Strawberry Wholesalers",
                 desc: "Wholesale strawberry runners packed field-ready. Bulk orders shipped nationwide with cold-chain care.",
-                img: image7.url,
+                img: "/7.jpeg",
                 icon: Truck,
               },
             ].map((s, i) => (
@@ -299,12 +424,13 @@ export default function Landing() {
               >
                 <TiltCard className="card-3d">
                   <div className="group relative rounded-3xl overflow-hidden bg-card shadow-3d border border-border">
-                    <div className="aspect-[4/3] overflow-hidden">
+                    <div className="aspect-[4/3] overflow-hidden relative">
                       <img
                         src={s.img}
                         alt={s.title}
                         className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                     <div className="p-6">
                       <div className="flex items-center gap-3">
@@ -347,6 +473,12 @@ export default function Landing() {
               Reserve early — high-demand varieties are allocated on a first-book,
               first-served basis. Boxed, labelled, and shipped nationwide.
             </p>
+            {daysLeft !== null && daysLeft > 0 && (
+              <div className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-4 py-2.5 text-sm font-bold">
+                <Timer className="h-4 w-4 text-leaf-glow" />
+                {daysLeft} days left to lock your order
+              </div>
+            )}
             <div className="mt-8 flex flex-wrap gap-3">
               <a
                 href={`tel:${phone}`}
@@ -372,10 +504,10 @@ export default function Landing() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             {[
-              { img: image11.url, label: "Export-grade boxes" },
-              { img: image7.url, label: "Cold-chain crates" },
-              { img: image8.url, label: "Root-bagged saplings" },
-              { img: image9.url, label: "Poly-house grown" },
+              { img: "/11.jpeg", label: "Export-grade boxes" },
+              { img: "/7.jpeg", label: "Cold-chain crates" },
+              { img: "/8.jpeg", label: "Root-bagged saplings" },
+              { img: "/9.jpeg", label: "Poly-house grown" },
             ].map((it, i) => (
               <motion.div
                 key={it.label}
@@ -396,6 +528,70 @@ export default function Landing() {
               </motion.div>
             ))}
           </motion.div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section id="testimonials" className="py-20 md:py-28 bg-cream/40">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 text-center">
+          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-bold text-primary justify-center">
+            <Users className="h-3.5 w-3.5" /> Farmer voices
+          </div>
+          <h2 className="mt-3 text-3xl sm:text-5xl font-extrabold text-balance">
+            What growers say about us.
+          </h2>
+
+          <div className="mt-12 relative min-h-[240px]">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={testimonialIdx}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5 }}
+                className="rounded-3xl bg-card border border-border shadow-3d p-8 sm:p-10 relative"
+              >
+                <Quote className="h-8 w-8 text-primary/30 mx-auto" />
+                <p className="mt-4 text-lg sm:text-xl font-medium text-card-foreground leading-relaxed">
+                  "{testimonials[testimonialIdx].quote}"
+                </p>
+                <div className="mt-6 flex items-center justify-center gap-1 text-gold">
+                  {Array.from({ length: testimonials[testimonialIdx].rating }).map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-gold text-gold" />
+                  ))}
+                </div>
+                <div className="mt-3 font-display font-bold">{testimonials[testimonialIdx].name}</div>
+                <div className="text-sm text-muted-foreground">{testimonials[testimonialIdx].place}</div>
+              </motion.div>
+            </AnimatePresence>
+
+            <div className="mt-6 flex items-center justify-center gap-2">
+              {testimonials.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setTestimonialIdx(i)}
+                  className={`h-2 rounded-full transition-all ${
+                    i === testimonialIdx ? "w-8 bg-primary" : "w-2 bg-primary/30"
+                  }`}
+                  aria-label={`Show testimonial ${i + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-14 grid grid-cols-3 gap-4 max-w-lg mx-auto">
+            {[
+              { k: "500+", v: "Farmers served", icon: Users },
+              { k: "10+", v: "Years experience", icon: Award },
+              { k: "4.9★", v: "Average rating", icon: Star },
+            ].map((s) => (
+              <div key={s.v} className="rounded-2xl bg-card border border-border p-4 text-center shadow-3d">
+                <s.icon className="h-5 w-5 mx-auto mb-1 text-primary" />
+                <div className="font-display text-xl font-bold">{s.k}</div>
+                <div className="text-[11px] uppercase tracking-wider text-muted-foreground mt-1">{s.v}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -437,9 +633,9 @@ export default function Landing() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.1 }}
             >
-              <video src={video.url} autoPlay muted loop playsInline className="h-full w-full object-cover" />
+              <video src="/video.mp4" autoPlay muted loop playsInline className="h-full w-full object-cover" />
             </motion.div>
-            {[{ img: image3.url, alt: "Harvested strawberries" }, { img: image2.url, alt: "Root-inspected runners" }, { img: image8.url, alt: "Bagged saplings" }, { img: image10.url, alt: "Field planting" }].map((item, i) => (
+            {[{ img: "/3.jpeg", alt: "Harvested strawberries" }, { img: "/2.jpeg", alt: "Root-inspected runners" }, { img: "/8.jpeg", alt: "Bagged saplings" }, { img: "/10.jpeg", alt: "Field planting" }].map((item, i) => (
               <motion.div
                 key={item.alt}
                 className="col-span-6 md:col-span-4 aspect-square rounded-3xl overflow-hidden shadow-3d card-3d"
@@ -505,12 +701,17 @@ export default function Landing() {
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <TiltCard>
+            <TiltCard intensity={4}>
             <form
               onSubmit={(e) => { e.preventDefault(); alert("Thanks! We'll be in touch shortly."); }}
-              className="rounded-3xl bg-card border border-border p-6 sm:p-8 shadow-3d"
+              className="rounded-3xl bg-card border border-border p-6 sm:p-8 shadow-3d-lg"
             >
-              <h3 className="font-display text-2xl font-bold">Request a quote</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-display text-2xl font-bold">Request a quote</h3>
+                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2.5 py-1 text-[11px] font-bold uppercase">
+                  <Timer className="h-3 w-3" /> Reply in 24h
+                </span>
+              </div>
               <p className="text-sm text-muted-foreground mt-1">Tell us what you need — we'll reply within 24 hours.</p>
 
               <div className="mt-6 grid sm:grid-cols-2 gap-4">
@@ -542,6 +743,9 @@ export default function Landing() {
               >
                 Send enquiry <ArrowRight className="h-4 w-4" />
               </button>
+              <p className="mt-3 text-center text-[11px] text-muted-foreground">
+                No spam, ever. We only use this to reply to your enquiry.
+              </p>
             </form>
           </TiltCard>
           </motion.div>
@@ -549,15 +753,13 @@ export default function Landing() {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-hero text-primary-foreground pt-16 pb-8 relative overflow-hidden">
+      <footer className="bg-hero text-primary-foreground pt-16 pb-28 md:pb-8 relative overflow-hidden">
         <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-leaf-glow/20 blur-3xl" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid md:grid-cols-4 gap-10">
             <div className="md:col-span-2">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-cream grid place-items-center ring-1 ring-white/20">
-                  <img src={logo.url} alt="YK Agro Nursery" className="h-11 w-11 object-contain" />
-                </div>
+                <img src="/logo.png" alt="YK Agro Nursery" className="h-20 w-auto object-contain" />
                 <div>
                   <div className="font-display font-bold text-xl">YK Agro Nursery</div>
                   <div className="text-xs uppercase tracking-widest text-primary-foreground/60">Rooted in quality</div>
@@ -602,6 +804,45 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+
+      {/* FLOATING WHATSAPP BUTTON (desktop) */}
+      <a
+        href={`https://wa.me/${whatsapp}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="hidden md:flex fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-leaf text-primary-foreground items-center justify-center shadow-3d-lg animate-pulse-ring hover:scale-110 transition-transform"
+        aria-label="Chat on WhatsApp"
+      >
+        <MessageCircle className="h-6 w-6" />
+      </a>
+
+      {/* STICKY MOBILE CTA BAR — lead-gen conversion bar */}
+      <AnimatePresence>
+        {showStickyBar && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed bottom-0 inset-x-0 z-40 md:hidden glass-dark text-primary-foreground border-t border-white/10 px-4 py-3 flex items-center gap-3"
+          >
+            <a
+              href={`tel:${phone}`}
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-2.5 text-sm font-semibold"
+            >
+              <Phone className="h-4 w-4" /> Call
+            </a>
+            <a
+              href={`https://wa.me/${whatsapp}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-leaf-glow text-primary px-4 py-2.5 text-sm font-bold"
+            >
+              <MessageCircle className="h-4 w-4" /> WhatsApp
+            </a>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
